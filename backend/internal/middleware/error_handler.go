@@ -47,8 +47,11 @@ func httpStatus(code int) int {
 		return http.StatusBadRequest
 	case constants.CodeConflict, constants.CodeUserExists, constants.CodeStationBusy,
 		constants.CodeStationFault, constants.CodeInsufficient, constants.CodeReservation,
-		constants.CodeSessionOpen, constants.CodeTournament:
+		constants.CodeSessionOpen, constants.CodeTournament, constants.CodeBootExpired,
+		constants.CodeBootUsed, constants.CodeBootMismatch, constants.CodeBootWindow:
 		return http.StatusConflict
+	case constants.CodeBootNotFound:
+		return http.StatusNotFound
 	default:
 		return http.StatusInternalServerError
 	}

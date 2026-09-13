@@ -36,9 +36,11 @@ const titles: Record<string, string> = {
   sessions: '上机记录与排行榜',
   tournaments: '赛事管理',
   audits: '操作审计',
+  bootcode: '我的开机码',
+  scanboot: '扫码开机',
 }
 
-const currentTitle = computed(() => titles[route.name as string] || '电竞馆')
+const currentTitle = computed(() => titles[String(route.name).toLowerCase()] || '电竞馆')
 
 function onBack() {
   if (route.path !== '/dashboard') {

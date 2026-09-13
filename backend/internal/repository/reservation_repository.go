@@ -34,6 +34,16 @@ func (r *ReservationRepository) FindByID(id uint) (*model.Reservation, error) {
 	return &res, err
 }
 
+// FindByIDForUpdate 事务内行锁查询预约。
+func (r *ReservationRepository) FindByIDForUpdate(tx *gorm.DB, id uint) (*model.Reservation, error) {
+	var res model.Reservation
+	err := tx.Clauses(clauseLocking()).First(&res, id).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, ErrNotFound
+	}
+	return &res, err
+}
+
 // Update 更新预约。
 func (r *ReservationRepository) Update(res *model.Reservation) error {
 	return r.db.Save(res).Error

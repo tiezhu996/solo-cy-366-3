@@ -1,6 +1,10 @@
 <template>
   <div class="dashboard">
     <van-notice-bar left-icon="volume-o" text="机位状态每 5 秒通过 WebSocket 实时推送，刷新自动同步" />
+    <div class="quick-entry">
+      <van-button v-if="isMember" type="primary" round icon="qr-code" size="large" @click="router.push('/boot-code')">我的开机码</van-button>
+      <van-button v-if="isStaffOrAdmin" type="success" round icon="scan" size="large" @click="router.push('/scan-boot')">扫码开机</van-button>
+    </div>
     <div class="stats">
       <div class="stat-card" v-for="s in statItems" :key="s.label">
         <div class="stat-value" :style="{ color: s.color }">{{ s.value }}</div>
@@ -17,9 +21,14 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import StatusBadge from '@/components/StatusBadge.vue'
 import { useStationStore } from '@/stores/stationStore'
 import { getSummary, type DashboardSummary } from '@/api/dashboard'
+import { useAuth } from '@/hooks/useAuth'
+
+const router = useRouter()
+const { isMember, isStaffOrAdmin } = useAuth()
 
 const stationStore = useStationStore()
 const summary = ref<DashboardSummary>({ station_total: 0, station_idle: 0, station_using: 0, station_fault: 0, station_reserved: 0, active_session: 0, member_total: 0, tournament_running: 0 })
@@ -43,6 +52,8 @@ onMounted(async () => {
 
 <style scoped>
 .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 12px 0; }
+.quick-entry { display: flex; gap: 10px; margin: 12px 0; }
+.quick-entry .van-button { flex: 1; }
 .stat-card { background: #fff; border-radius: 10px; padding: 14px 8px; text-align: center; }
 .stat-value { font-size: 22px; font-weight: 600; }
 .stat-label { font-size: 12px; color: #969799; margin-top: 4px; }

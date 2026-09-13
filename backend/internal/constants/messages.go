@@ -17,6 +17,9 @@ const (
 	MsgRenewOK      = "续费成功"
 	MsgCheckoutOK   = "下机成功"
 	MsgDrawOK       = "抽签分组完成"
+
+	MsgBootCodeGenerateOK = "动态开机码生成成功"
+	MsgBootCodeVerifyOK   = "扫码校验通过，开机成功"
 )
 
 // 日志文案模板（非格式化部分）。

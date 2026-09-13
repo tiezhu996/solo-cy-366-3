@@ -19,6 +19,11 @@ const (
 	CodeReservation  = 40007
 	CodeSessionOpen  = 40008
 	CodeTournament   = 40009
+	CodeBootNotFound = 40010 // 开机码不存在
+	CodeBootExpired  = 40011 // 开机码已失效/超过有效期
+	CodeBootUsed     = 40012 // 开机码已核销
+	CodeBootMismatch = 40013 // 扫码校验信息不匹配（机位/会员/预约）
+	CodeBootWindow   = 40014 // 未在到店时间窗内
 )
 
 // 错误码与默认文案映射。
@@ -40,4 +45,9 @@ var ErrorMessages = map[int]string{
 	CodeReservation:  "预约状态不允许该操作",
 	CodeSessionOpen:  "该机位已有进行中的上机记录",
 	CodeTournament:   "赛事状态不允许该操作",
+	CodeBootNotFound: "动态开机码不存在或无效",
+	CodeBootExpired:  "动态开机码已失效，请重新生成",
+	CodeBootUsed:     "动态开机码已核销，请勿重复扫码",
+	CodeBootMismatch: "扫码校验信息不匹配",
+	CodeBootWindow:   "未在预约到店时间窗内，请联系店员",
 }

@@ -53,6 +53,7 @@ func migrate(db *gorm.DB) error {
 		&model.Registration{},
 		&model.Match{},
 		&model.AuditLog{},
+		&model.BootCode{},
 	)
 }
 
@@ -94,6 +95,22 @@ func Seed(db *gorm.DB, logger *slog.Logger) error {
 			return fmt.Errorf("seed create member: %w", err)
 		}
 		logger.Info("seed admin/member created")
+	}
+
+	// 幂等补入门店店员账号（老库升级场景）。
+	var staff model.User
+	if err := db.Where("username = ?", "staff").First(&staff).Error; err != nil {
+		hashStaff, err := util.HashPassword("staff123456")
+		if err != nil {
+			return fmt.Errorf("seed hash staff: %w", err)
+		}
+		if err := db.Create(&model.User{
+			Username: "staff", Password: hashStaff, Nickname: "门店店员",
+			Role: "staff", Status: "active",
+		}).Error; err != nil {
+			return fmt.Errorf("seed create staff: %w", err)
+		}
+		logger.Info("seed staff created")
 	}
 
 	var stationCount int64

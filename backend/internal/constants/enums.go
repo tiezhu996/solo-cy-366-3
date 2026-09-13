@@ -56,6 +56,29 @@ func IsValidSessionStatus(s string) bool {
 	return false
 }
 
+// BootCodeStatus 动态开机码状态枚举。
+const (
+	BootCodeActive    = "active"    // 待核销
+	BootCodeUsed      = "used"      // 已核销开机
+	BootCodeExpired   = "expired"   // 已失效（超过有效期）
+	BootCodeCancelled = "cancelled" // 已作废（被新码替换/预约取消）
+)
+
+// AllBootCodeStatus 所有开机码状态。
+var AllBootCodeStatus = []string{BootCodeActive, BootCodeUsed, BootCodeExpired, BootCodeCancelled}
+
+// IsValidBootCodeStatus 判断开机码状态是否合法。
+func IsValidBootCodeStatus(s string) bool {
+	switch s {
+	case BootCodeActive, BootCodeUsed, BootCodeExpired, BootCodeCancelled:
+		return true
+	}
+	return false
+}
+
+// BootCodeTTLMinutes 动态开机码有效期（分钟）。
+const BootCodeTTLMinutes = 5
+
 // TournamentStatus 赛事状态枚举。
 const (
 	TournamentDraft    = "draft"    // 草稿

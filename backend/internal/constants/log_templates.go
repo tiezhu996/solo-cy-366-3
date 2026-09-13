@@ -29,4 +29,9 @@ var LogTemplates = map[string]string{
 	"registration_create_ok": "registration create success, tournamentID=%d, mode=%s",
 	"match_result_ok":        "match result submit success, matchID=%d, winnerID=%d",
 	"audit_write_ok":         "audit log write success, action=%s, module=%s",
+	"boot_code_generate_ok":  "boot code generate success, userID=%d, reservationID=%d, stationID=%d, code=%s",
+	"boot_code_revoke_ok":    "boot code revoke success, codeID=%d, reservationID=%d, status=%s",
+	"boot_code_verify_ok":    "boot code verify success, code=%s, staffID=%d, userID=%d, stationID=%d, sessionID=%d",
+	"boot_code_verify_fail":  "boot code verify failed, code=%s, staffID=%d, reason=%s",
+	"boot_code_consume_ok":   "boot code billing consume, userID=%d, packageHours=%f, balanceCost=%f",
 }

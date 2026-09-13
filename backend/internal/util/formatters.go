@@ -46,6 +46,10 @@ func StatusText(status string) string {
 		return "已拒绝"
 	case "playing":
 		return "进行中"
+	case "used":
+		return "已核销"
+	case "expired":
+		return "已失效"
 	}
 	return status
 }

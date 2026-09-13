@@ -55,6 +55,7 @@ func main() {
 	regRepo := repository.NewRegistrationRepository(db)
 	matchRepo := repository.NewMatchRepository(db)
 	auditRepo := repository.NewAuditRepository(db)
+	bootCodeRepo := repository.NewBootCodeRepository(db)
 
 	// 服务层
 	authService := service.NewAuthService(userRepo, logger, cfg.JWTSecret, cfg.JWTExpireSec)
@@ -64,6 +65,7 @@ func main() {
 	rechargeService := service.NewRechargeService(userRepo, rechargeRepo, packageRepo, userPkgRepo, orderRepo, logger)
 	reservationService := service.NewReservationService(reservationRepo, stationService, db, logger)
 	sessionService := service.NewSessionService(sessionRepo, stationService, userPkgRepo, userRepo, reservationRepo, db, logger)
+	bootCodeService := service.NewBootCodeService(bootCodeRepo, reservationRepo, sessionRepo, userRepo, userPkgRepo, stationService, sessionService, db, logger)
 	tournamentService := service.NewTournamentService(tournamentRepo, teamRepo, regRepo, matchRepo, db, logger)
 	auditService := service.NewAuditService(auditRepo, logger)
 	dashboardService := service.NewDashboardService(db, logger)
@@ -76,6 +78,7 @@ func main() {
 	rechargeHandler := handler.NewRechargeHandler(rechargeService, logger)
 	reservationHandler := handler.NewReservationHandler(reservationService, logger)
 	sessionHandler := handler.NewSessionHandler(sessionService, logger)
+	bootCodeHandler := handler.NewBootCodeHandler(bootCodeService, logger)
 	tournamentHandler := handler.NewTournamentHandler(tournamentService, logger)
 	auditHandler := handler.NewAuditHandler(auditService, logger)
 	dashboardHandler := handler.NewDashboardHandler(dashboardService, logger)
@@ -112,6 +115,7 @@ func main() {
 	router.RegisterTimePackage(api, packageHandler, cfg.JWTSecret)
 	router.RegisterReservation(api, reservationHandler, cfg.JWTSecret)
 	router.RegisterSession(api, sessionHandler, cfg.JWTSecret)
+	router.RegisterBootCode(api, bootCodeHandler, cfg.JWTSecret)
 	router.RegisterTournament(api, tournamentHandler, cfg.JWTSecret)
 	router.RegisterAudit(api, auditHandler, cfg.JWTSecret)
 	router.RegisterDashboard(api, dashboardHandler, cfg.JWTSecret)

@@ -24,7 +24,7 @@
           </van-form>
         </van-tab>
       </van-tabs>
-      <p class="tips">演示账号：admin / admin123456（管理员），member / member123456（会员）</p>
+      <p class="tips">演示账号：admin / admin123456（管理员），staff / staff123456（店员），member / member123456（会员）</p>
     </div>
   </div>
 </template>

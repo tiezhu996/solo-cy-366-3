@@ -15,6 +15,7 @@
       <van-cell v-for="r in list" :key="r.id" :title="`预约 #${r.id} · 机位 ${r.station_id}`" :label="`${formatTime(r.start_time)} ~ ${formatTime(r.end_time)}`">
         <template #value>
           <StatusBadge kind="reservation" :status="r.status" />
+          <van-button v-if="isMember && r.status === 'confirmed'" size="mini" type="success" class="op-btn" @click="goBootCode">开机码</van-button>
           <van-button v-if="isStaffOrAdmin && r.status === 'confirmed'" size="mini" type="primary" class="op-btn" @click="checkIn(r)">开机</van-button>
           <van-button v-if="['pending','confirmed'].includes(r.status)" size="mini" type="danger" plain class="op-btn" @click="cancel(r)">取消</van-button>
         </template>
@@ -33,13 +34,19 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { showSuccessToast, showToast } from 'vant'
 import StatusBadge from '@/components/StatusBadge.vue'
 import { listReservations, createReservation, cancelReservation, checkInReservation, type Reservation } from '@/api/reservation'
 import { formatTime } from '@/utils/format'
 import { useAuth } from '@/hooks/useAuth'
 
-const { isStaffOrAdmin } = useAuth()
+const router = useRouter()
+const { isStaffOrAdmin, isMember } = useAuth()
+
+function goBootCode() {
+  router.push('/boot-code')
+}
 const list = ref<Reservation[]>([])
 const total = ref(0)
 const page = ref(1)

@@ -113,6 +113,8 @@ func (s *SessionService) Renew(userID, sessionID uint, req *dto.RenewSessionReq)
 	}
 	end := sess.EndTime.Add(time.Duration(req.AddMinutes) * time.Minute)
 	sess.EndTime = &end
+	// 续费已即时扣费，分钟数计入预付，下机结算时不再重复收取。
+	sess.PrepaidMinutes += req.AddMinutes
 	if err := s.sessionRepo.Update(sess); err != nil {
 		return nil, fmt.Errorf("session renew update: %w", err)
 	}
@@ -138,16 +140,26 @@ func (s *SessionService) End(userID, sessionID uint, req *dto.EndSessionReq) (*m
 		end = *sess.EndTime
 	}
 	duration := int(end.Sub(sess.StartTime).Minutes())
+	// 扫码开机已按预约时长预付，下机只结算预付时段之外的超时部分（时长包优先、余额兜底）。
+	billMinutes := duration - sess.PrepaidMinutes
+	if billMinutes < 0 {
+		billMinutes = 0
+	}
 	station, err := s.stationService.GetByID(sess.StationID)
 	if err != nil {
 		return nil, err
 	}
-	amount := station.PricePerHour * float64(duration) / 60
-	// 结算：先扣时长包，不足部分扣余额（结束上机时结算本机时长费用）。
-	neededHours := float64(duration) / 60
-	if err := s.consumeHoursAndCharge(userID, neededHours, station.PricePerHour); err != nil {
-		return nil, err
+	overtimeAmount := 0.0
+	if billMinutes > 0 {
+		neededHours := float64(billMinutes) / 60
+		var charge ChargeResult
+		charge, err = s.ChargeWithinTx(nil, userID, neededHours, station.PricePerHour)
+		if err != nil {
+			return nil, err
+		}
+		overtimeAmount = charge.BalanceCost
 	}
+	amount := station.PricePerHour*float64(sess.PrepaidMinutes)/60 + overtimeAmount
 	err = s.db.Transaction(func(tx *gorm.DB) error {
 		sess.EndTime = &end
 		sess.DurationMinutes = duration
@@ -173,21 +185,49 @@ func (s *SessionService) End(userID, sessionID uint, req *dto.EndSessionReq) (*m
 
 // consumeHoursAndCharge 消费扣款：优先消耗时长包小时数，不足部分按机位时价从余额扣除。
 func (s *SessionService) consumeHoursAndCharge(userID uint, neededHours, pricePerHour float64) error {
-	consumedHours, err := s.userPkgRepo.ConsumeHours(userID, neededHours)
-	if err != nil {
-		return fmt.Errorf("session consume package: %w", err)
+	_, err := s.ChargeWithinTx(nil, userID, neededHours, pricePerHour)
+	return err
+}
+
+// ChargeResult 计费拆账结果。
+type ChargeResult struct {
+	PackageHours float64 // 时长包承担小时数
+	BalanceCost  float64 // 余额承担金额
+}
+
+// ChargeWithinTx 在指定事务内完成"时长包优先、余额兜底"的计费扣费，返回拆账结果。
+// tx 为 nil 时使用仓储自带事务；扫码开机（boot_service）、续费、下机超时结算均复用该方法。
+func (s *SessionService) ChargeWithinTx(tx *gorm.DB, userID uint, neededHours, pricePerHour float64) (ChargeResult, error) {
+	if neededHours <= 0 {
+		return ChargeResult{}, nil
 	}
-	remainingHours := neededHours - consumedHours
-	if remainingHours > 0.0001 {
-		cost := remainingHours * pricePerHour
-		if err := s.userRepo.UpdateBalance(userID, -cost); err != nil {
+	var (
+		consumedHours float64
+		err           error
+	)
+	if tx != nil {
+		consumedHours, err = s.userPkgRepo.ConsumeHoursTx(tx, userID, neededHours)
+	} else {
+		consumedHours, err = s.userPkgRepo.ConsumeHours(userID, neededHours)
+	}
+	if err != nil {
+		return ChargeResult{}, fmt.Errorf("session consume package: %w", err)
+	}
+	packageHours, balanceCost := splitBilling(neededHours, consumedHours, pricePerHour)
+	if balanceCost > 0 {
+		if tx != nil {
+			err = s.userRepo.UpdateBalanceTx(tx, userID, -balanceCost)
+		} else {
+			err = s.userRepo.UpdateBalance(userID, -balanceCost)
+		}
+		if err != nil {
 			if errors.Is(err, repository.ErrConflict) {
-				return util.NewAppError(constants.CodeInsufficient, "会员余额不足，请先充值")
+				return ChargeResult{}, util.NewAppError(constants.CodeInsufficient, "会员余额不足，请先充值")
 			}
-			return fmt.Errorf("session consume balance: %w", err)
+			return ChargeResult{}, fmt.Errorf("session consume balance: %w", err)
 		}
 	}
-	return nil
+	return ChargeResult{PackageHours: packageHours, BalanceCost: balanceCost}, nil
 }
 
 // List 分页查询上机记录。

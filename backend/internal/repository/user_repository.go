@@ -74,16 +74,31 @@ func (r *UserRepository) List(page, pageSize int) ([]model.User, int64, error) {
 // UpdateBalance 更新余额（扣款时校验余额充足）。
 func (r *UserRepository) UpdateBalance(userID uint, delta float64) error {
 	return r.db.Transaction(func(tx *gorm.DB) error {
-		var u model.User
-		if err := tx.Clauses(clauseLocking()).First(&u, userID).Error; err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return ErrNotFound
-			}
-			return err
-		}
-		if u.Balance+delta < 0 {
-			return ErrConflict
-		}
-		return tx.Model(&model.User{}).Where("id = ?", userID).Update("balance", u.Balance+delta).Error
+		return r.UpdateBalanceTx(tx, userID, delta)
 	})
+}
+
+// FindByIDForUpdate 事务内行锁查询会员。
+func (r *UserRepository) FindByIDForUpdate(tx *gorm.DB, id uint) (*model.User, error) {
+	var u model.User
+	err := tx.Clauses(clauseLocking()).First(&u, id).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, ErrNotFound
+	}
+	return &u, err
+}
+
+// UpdateBalanceTx 在指定事务内更新余额（扣款时校验余额充足），供扫码开机等多步写操作复用同一事务。
+func (r *UserRepository) UpdateBalanceTx(tx *gorm.DB, userID uint, delta float64) error {
+	var u model.User
+	if err := tx.Clauses(clauseLocking()).First(&u, userID).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return ErrNotFound
+		}
+		return err
+	}
+	if u.Balance+delta < 0 {
+		return ErrConflict
+	}
+	return tx.Model(&model.User{}).Where("id = ?", userID).Update("balance", u.Balance+delta).Error
 }

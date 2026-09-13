@@ -98,6 +98,7 @@ CREATE TABLE IF NOT EXISTS sessions (
     start_time DATETIME(3) NOT NULL,
     end_time DATETIME(3),
     duration_minutes INT DEFAULT 0,
+    prepaid_minutes INT DEFAULT 0,
     game_type VARCHAR(16) DEFAULT 'other',
     amount DECIMAL(12,2) DEFAULT 0,
     status VARCHAR(16) DEFAULT 'active',
@@ -105,6 +106,25 @@ CREATE TABLE IF NOT EXISTS sessions (
     updated_at DATETIME(3),
     KEY idx_sessions_user (user_id),
     KEY idx_sessions_station (station_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS boot_codes (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    code VARCHAR(16) NOT NULL UNIQUE,
+    reservation_id BIGINT UNSIGNED NOT NULL,
+    user_id BIGINT UNSIGNED NOT NULL,
+    station_id BIGINT UNSIGNED NOT NULL,
+    session_id BIGINT UNSIGNED DEFAULT 0,
+    status VARCHAR(16) DEFAULT 'active',
+    expire_at DATETIME(3) NOT NULL,
+    verified_by BIGINT UNSIGNED DEFAULT 0,
+    verified_at DATETIME(3),
+    created_at DATETIME(3),
+    updated_at DATETIME(3),
+    KEY idx_boot_codes_user (user_id),
+    KEY idx_boot_codes_reservation (reservation_id),
+    KEY idx_boot_codes_station (station_id),
+    KEY idx_boot_codes_verified_by (verified_by)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS tournaments (

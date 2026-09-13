@@ -24,6 +24,21 @@ func (r *SessionRepository) Create(s *model.Session) error {
 	return r.db.Create(s).Error
 }
 
+// CreateTx 在指定事务内创建上机记录。
+func (r *SessionRepository) CreateTx(tx *gorm.DB, s *model.Session) error {
+	return tx.Create(s).Error
+}
+
+// FindByIDForUpdate 事务内行锁查询上机记录。
+func (r *SessionRepository) FindByIDForUpdate(tx *gorm.DB, id uint) (*model.Session, error) {
+	var s model.Session
+	err := tx.Clauses(clauseLocking()).First(&s, id).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, ErrNotFound
+	}
+	return &s, err
+}
+
 // FindByID 查询上机记录。
 func (r *SessionRepository) FindByID(id uint) (*model.Session, error) {
 	var s model.Session

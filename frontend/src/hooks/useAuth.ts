@@ -7,6 +7,8 @@ export function useAuth() {
   const isLogin = computed(() => authStore.token !== '')
   const user = computed(() => authStore.user)
   const isAdmin = computed(() => authStore.user?.role === USER_ROLE.ADMIN)
+  const isStaff = computed(() => authStore.user?.role === USER_ROLE.STAFF)
+  const isMember = computed(() => authStore.user?.role === USER_ROLE.MEMBER)
   const isStaffOrAdmin = computed(() => authStore.user?.role === USER_ROLE.ADMIN || authStore.user?.role === USER_ROLE.STAFF)
-  return { isLogin, user, isAdmin, isStaffOrAdmin, login: authStore.login, logout: authStore.logout, fetchProfile: authStore.fetchProfile }
+  return { isLogin, user, isAdmin, isStaff, isMember, isStaffOrAdmin, login: authStore.login, logout: authStore.logout, fetchProfile: authStore.fetchProfile }
 }

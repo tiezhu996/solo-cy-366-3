@@ -54,6 +54,30 @@ export const SESSION_STATUS_TEXT: Record<string, string> = {
   completed: '已结束',
 }
 
+export const BOOT_CODE_STATUS = {
+  ACTIVE: 'active',
+  USED: 'used',
+  EXPIRED: 'expired',
+  CANCELLED: 'cancelled',
+} as const
+
+export const BOOT_CODE_STATUS_TEXT: Record<string, string> = {
+  active: '待核销',
+  used: '已核销',
+  expired: '已失效',
+  cancelled: '已作废',
+}
+
+export const BOOT_CODE_STATUS_TYPE: Record<string, string> = {
+  active: 'success',
+  used: 'primary',
+  expired: 'danger',
+  cancelled: 'default',
+}
+
+// 动态开机码有效期（分钟），与后端 constants.BootCodeTTLMinutes 保持一致。
+export const BOOT_CODE_TTL_MINUTES = 5
+
 export const TOURNAMENT_STATUS = {
   DRAFT: 'draft',
   OPEN: 'open',
